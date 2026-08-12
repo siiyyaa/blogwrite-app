@@ -48,8 +48,10 @@
 
                 <div>
                     <h1>
-                        Welcome back.
+                        Welcome back, <span class="current-user-name">Guest</span>.
                     </h1>
+
+                    <p class="current-user-email"></p>
 
                     <p>
                         Keep your ideas organized and continue
@@ -71,12 +73,12 @@
 
             <div class="dashboard-stat">
                 <span>Total posts</span>
-                <strong>12</strong>
+                <strong id="totalPosts">12</strong>
             </div>
 
             <div class="dashboard-stat">
                 <span>Published</span>
-                <strong>8</strong>
+                <strong id="publishedPosts">8</strong>
             </div>
 
             <div class="dashboard-stat">
@@ -109,7 +111,7 @@
             </div>
 
 
-            <div class="dashboard-posts" id="all-posts">
+            <div class="dashboard-posts" id="dashboardPosts">
 
                 <article class="dashboard-post">
 
@@ -264,7 +266,7 @@
 
         <div class="footer-bottom">
 
-            <span>© 2026 BlogWrite</span>
+           <span>© <span class="current-year"></span> BlogWrite</span>
 
             <span>
                 Built with HTML, CSS & JavaScript
@@ -274,5 +276,6 @@
 
     </footer>
 
+    <script src="script.js"></script>
 </body>
 </html>
