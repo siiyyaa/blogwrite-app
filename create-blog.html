@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>BlogWrite | Create Blog</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="site-header">
+
+        <div class="header-inner">
+
+            <a href="home.html" class="brand">
+                BLOGWRITE
+            </a>
+
+            <nav class="site-nav">
+
+                <a href="home.html">
+                    Home
+                </a>
+
+                <a href="dashboard.html">
+                    Dashboard
+                </a>
+
+                <a href="create-blog.html" class="active">
+                    Write
+                </a>
+
+                <a href="login.html">
+                    Sign in
+                </a>
+
+                <a href="register.html" class="join-button">
+                    Join BlogWrite
+                </a>
+
+            </nav>
+
+        </div>
+
+    </header>
+
+
+    <!-- Main -->
+    <main class="create-page">
+
+        <section class="create-header">
+
+            <p class="eyebrow">
+                NEW STORY
+            </p>
+
+            <h1>
+                Write something<br>
+                worth sharing.
+            </h1>
+
+            <p>
+                Take your time. Start with an idea and let
+                the words follow.
+            </p>
+
+        </section>
+
+
+        <section class="editor-wrapper">
+
+            <form class="blog-editor">
+
+                <div class="form-group">
+
+                    <label for="title">
+                        Post title
+                    </label>
+
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        placeholder="Give your story a title..."
+                    >
+
+                </div>
+
+
+                <div class="editor-row">
+
+                    <div class="form-group">
+
+                        <label for="category">
+                            Category
+                        </label>
+
+                        <select id="category" name="category">
+
+                            <option value="">
+                                Select category
+                            </option>
+
+                            <option value="writing">
+                                Writing
+                            </option>
+
+                            <option value="technology">
+                                Technology
+                            </option>
+
+                            <option value="uiux">
+                                UI / UX
+                            </option>
+
+                            <option value="productivity">
+                                Productivity
+                            </option>
+
+                            <option value="personal">
+                                Personal
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="author">
+                            Author
+                        </label>
+
+                        <input
+                            type="text"
+                            id="author"
+                            name="author"
+                            placeholder="Your name"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="content">
+                        Your story
+                    </label>
+
+                    <textarea
+                        id="content"
+                        name="content"
+                        placeholder="Start writing your story here..."
+                    ></textarea>
+
+                </div>
+
+
+                <div class="editor-footer">
+
+                    <span>
+                        Your draft is saved locally.
+                    </span>
+
+                    <div class="editor-actions">
+
+                        <button
+                            type="button"
+                            class="button button-secondary"
+                        >
+                            Save draft
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="button button-primary"
+                        >
+                            Publish post
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </section>
+
+    </main>
+
+
+    <!-- Footer -->
+    <footer class="site-footer">
+
+        <div class="footer-inner">
+
+            <div>
+
+                <strong>BLOGWRITE</strong>
+
+                <p>
+                    A simple space for modern writers.
+                </p>
+
+            </div>
+
+            <div class="footer-links">
+
+                <a href="home.html">Home</a>
+                <a href="dashboard.html">Dashboard</a>
+                <a href="create-blog.html">Create Blog</a>
+                <a href="login.html">Login</a>
+
+            </div>
+
+        </div>
+
+        <div class="footer-bottom">
+
+            <span>
+                © 2026 BlogWrite
+            </span>
+
+            <span>
+                Built with HTML, CSS & JavaScript
+            </span>
+
+        </div>
+
+    </footer>
+
+</body>
+</html>
