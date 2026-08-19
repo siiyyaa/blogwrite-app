@@ -1,27 +1,32 @@
 /* =========================================================
    BLOGWRITE - SHARED JAVASCRIPT
-   Works with:
+   Frontend connected to Node.js + Express backend
+
+   Pages:
    1. home.html
    2. dashboard.html
    3. create-blog.html
    4. login.html
    5. register.html
 
-   Uses localStorage for:
-   - User registration
-   - Login state
-   - Blog posts
+   Backend:
+   http://localhost:5000
 ========================================================= */
 
 
 /* =========================================================
-   STORAGE KEYS
+   API
+========================================================= */
+
+const API_URL = "http://localhost:5000";
+
+
+/* =========================================================
+   LOCAL STORAGE
 ========================================================= */
 
 const STORAGE_KEYS = {
-    users: "blogwrite_users",
-    currentUser: "blogwrite_current_user",
-    posts: "blogwrite_posts"
+    currentUser: "blogwrite_current_user"
 };
 
 
@@ -29,74 +34,85 @@ const STORAGE_KEYS = {
    HELPER FUNCTIONS
 ========================================================= */
 
-/* Get data from localStorage */
+function generateId() {
 
-function getData(key, defaultValue = []) {
-    try {
-        const data = localStorage.getItem(key);
+    return Date.now().toString();
 
-        if (data === null) {
-            return defaultValue;
-        }
-
-        return JSON.parse(data);
-
-    } catch (error) {
-        console.error("Error reading localStorage:", error);
-        return defaultValue;
-    }
 }
 
-
-/* Save data to localStorage */
-
-function saveData(key, data) {
-    localStorage.setItem(key, JSON.stringify(data));
-}
-
-
-/* Get currently logged-in user */
 
 function getCurrentUser() {
-    return localStorage.getItem(STORAGE_KEYS.currentUser);
+
+    const user =
+        localStorage.getItem(STORAGE_KEYS.currentUser);
+
+    if (!user) {
+        return null;
+    }
+
+    try {
+
+        return JSON.parse(user);
+
+    } catch (error) {
+
+        return null;
+
+    }
+
 }
 
-
-/* Check whether a user is logged in */
 
 function isLoggedIn() {
+
     return getCurrentUser() !== null;
+
 }
 
 
-/* Generate a simple unique ID */
+function saveCurrentUser(user) {
 
-function generateId() {
-    return Date.now().toString();
+    localStorage.setItem(
+        STORAGE_KEYS.currentUser,
+        JSON.stringify(user)
+    );
+
 }
 
 
-/* Escape HTML before displaying user-generated content */
+function clearCurrentUser() {
+
+    localStorage.removeItem(
+        STORAGE_KEYS.currentUser
+    );
+
+}
+
 
 function escapeHTML(text) {
 
-    const div = document.createElement("div");
+    const div =
+        document.createElement("div");
 
-    div.textContent = text;
+    div.textContent =
+        text ?? "";
 
     return div.innerHTML;
+
 }
 
 
-/* Format date */
-
 function formatDate(date) {
 
-    return new Date(date).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric"
-    });
+    return new Date(date).toLocaleDateString(
+        "en-US",
+        {
+            month: "short",
+            day: "numeric",
+            year: "numeric"
+        }
+    );
+
 }
 
 
@@ -104,50 +120,70 @@ function formatDate(date) {
    PAGE DETECTION
 ========================================================= */
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
-    const currentPage =
-        window.location.pathname
-            .split("/")
-            .pop()
-            .toLowerCase();
-
-
-    /* Common functionality */
-
-    initializeNavigation();
-    initializeSmoothScrolling();
-    updateLoginNavigation();
-    updateCurrentYear();
+        const currentPage =
+            window.location.pathname
+                .split("/")
+                .pop()
+                .toLowerCase();
 
 
-    /* Page-specific functionality */
+        /* Common functionality */
 
-    if (currentPage === "home.html" || currentPage === "") {
-        initializeHomePage();
+        initializeNavigation();
+        initializeSmoothScrolling();
+        updateLoginNavigation();
+        updateCurrentYear();
+
+
+        /* Page-specific functionality */
+
+        if (
+            currentPage === "home.html" ||
+            currentPage === ""
+        ) {
+
+            initializeHomePage();
+
+        }
+
+
+        if (currentPage === "register.html") {
+
+            initializeRegisterPage();
+
+        }
+
+
+        if (currentPage === "login.html") {
+
+            initializeLoginPage();
+
+        }
+
+
+        if (currentPage === "create-blog.html") {
+
+            initializeCreateBlogPage();
+
+        }
+
+
+        if (currentPage === "dashboard.html") {
+
+            initializeDashboardPage();
+
+        }
+
     }
-
-    if (currentPage === "register.html") {
-        initializeRegisterPage();
-    }
-
-    if (currentPage === "login.html") {
-        initializeLoginPage();
-    }
-
-    if (currentPage === "create-blog.html") {
-        initializeCreateBlogPage();
-    }
-
-    if (currentPage === "dashboard.html") {
-        initializeDashboardPage();
-    }
-
-});
+);
 
 
 /* =========================================================
-   COMMON - NAVIGATION
+   NAVIGATION
 ========================================================= */
 
 function initializeNavigation() {
@@ -161,82 +197,109 @@ function initializeNavigation() {
 
     if (navToggle && siteNav) {
 
-        navToggle.addEventListener("click", function () {
+        navToggle.addEventListener(
+            "click",
+            function () {
 
-            siteNav.classList.toggle("open");
+                siteNav.classList.toggle("open");
 
-        });
+            }
+        );
 
     }
 
 
-    /* Close mobile menu after clicking a link */
-
     const navLinks =
-        document.querySelectorAll(".site-nav a");
+        document.querySelectorAll(
+            ".site-nav a"
+        );
 
-    navLinks.forEach(function (link) {
 
-        link.addEventListener("click", function () {
+    navLinks.forEach(
+        function (link) {
 
-            if (siteNav) {
-                siteNav.classList.remove("open");
-            }
+            link.addEventListener(
+                "click",
+                function () {
 
-        });
+                    if (siteNav) {
 
-    });
+                        siteNav.classList.remove(
+                            "open"
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
 
 }
 
 
 /* =========================================================
-   COMMON - SMOOTH SCROLLING
+   SMOOTH SCROLLING
 ========================================================= */
 
 function initializeSmoothScrolling() {
 
     const links =
-        document.querySelectorAll('a[href^="#"]');
+        document.querySelectorAll(
+            'a[href^="#"]'
+        );
 
 
-    links.forEach(function (link) {
+    links.forEach(
+        function (link) {
 
-        link.addEventListener("click", function (event) {
+            link.addEventListener(
+                "click",
+                function (event) {
 
-            const targetId =
-                link.getAttribute("href");
-
-
-            if (!targetId || targetId === "#") {
-                return;
-            }
+                    const targetId =
+                        link.getAttribute("href");
 
 
-            const target =
-                document.querySelector(targetId);
+                    if (
+                        !targetId ||
+                        targetId === "#"
+                    ) {
+
+                        return;
+
+                    }
 
 
-            if (target) {
+                    const target =
+                        document.querySelector(
+                            targetId
+                        );
 
-                event.preventDefault();
 
-                target.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start"
-                });
+                    if (target) {
 
-            }
+                        event.preventDefault();
 
-        });
+                        target.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start"
+                        });
 
-    });
+                    }
+
+                }
+            );
+
+        }
+    );
 
 }
 
 
 /* =========================================================
-   COMMON - LOGIN NAVIGATION
+   LOGIN / LOGOUT NAVIGATION
 ========================================================= */
 
 function updateLoginNavigation() {
@@ -259,30 +322,41 @@ function updateLoginNavigation() {
 
     if (currentUser) {
 
-        loginLinks.forEach(function (link) {
+        loginLinks.forEach(
+            function (link) {
 
-            link.textContent = "Logout";
+                link.textContent =
+                    "Logout";
 
-            link.href = "#";
+                link.href =
+                    "#";
 
-            link.addEventListener("click", function (event) {
+                link.addEventListener(
+                    "click",
+                    function (event) {
 
-                event.preventDefault();
+                        event.preventDefault();
 
-                logoutUser();
+                        logoutUser();
 
-            });
+                    }
+                );
 
-        });
+            }
+        );
 
 
-        registerLinks.forEach(function (link) {
+        registerLinks.forEach(
+            function (link) {
 
-            link.textContent = "Dashboard";
+                link.textContent =
+                    "Dashboard";
 
-            link.href = "dashboard.html";
+                link.href =
+                    "dashboard.html";
 
-        });
+            }
+        );
 
     }
 
@@ -290,38 +364,43 @@ function updateLoginNavigation() {
 
 
 /* =========================================================
-   COMMON - LOGOUT
+   LOGOUT
 ========================================================= */
 
 function logoutUser() {
 
-    localStorage.removeItem(
-        STORAGE_KEYS.currentUser
+    clearCurrentUser();
+
+    alert(
+        "You have been logged out."
     );
 
-    alert("You have been logged out.");
-
-    window.location.href = "home.html";
+    window.location.href =
+        "home.html";
 
 }
 
 
 /* =========================================================
-   COMMON - CURRENT YEAR
+   CURRENT YEAR
 ========================================================= */
 
 function updateCurrentYear() {
 
     const yearElements =
-        document.querySelectorAll(".current-year");
+        document.querySelectorAll(
+            ".current-year"
+        );
 
 
-    yearElements.forEach(function (element) {
+    yearElements.forEach(
+        function (element) {
 
-        element.textContent =
-            new Date().getFullYear();
+            element.textContent =
+                new Date().getFullYear();
 
-    });
+        }
+    );
 
 }
 
@@ -332,397 +411,312 @@ function updateCurrentYear() {
 
 function initializeHomePage() {
 
-    displayLatestPosts();
-
-}
-
-
-/* =========================================================
-   HOME - DISPLAY LATEST POSTS
-========================================================= */
-
-function displayLatestPosts() {
-
-    const postList =
-        document.querySelector(".post-list");
-
-
-    if (!postList) {
-        return;
-    }
-
-
-    const posts =
-        getData(STORAGE_KEYS.posts, []);
-
-
     /*
-       If there are no user-created posts,
-       keep the posts already written in HTML.
+       Your homepage currently contains
+       static posts.
+
+       We leave them in place.
     */
-
-    if (posts.length === 0) {
-        return;
-    }
-
-
-    const latestPosts =
-        posts
-            .slice()
-            .sort(function (a, b) {
-
-                return new Date(b.createdAt) -
-                       new Date(a.createdAt);
-
-            })
-            .slice(0, 3);
-
-
-    postList.innerHTML = "";
-
-
-    latestPosts.forEach(function (post) {
-
-        const article =
-            document.createElement("article");
-
-        article.className = "post";
-
-
-        article.innerHTML = `
-            <div class="post-meta">
-                <span>${escapeHTML(post.category)}</span>
-                <span>${formatDate(post.createdAt)}</span>
-            </div>
-
-            <h3>
-                ${escapeHTML(post.title)}
-            </h3>
-
-            <p>
-                ${escapeHTML(post.excerpt)}
-            </p>
-
-            <a href="dashboard.html" class="post-link">
-                Read post →
-            </a>
-        `;
-
-
-        postList.appendChild(article);
-
-    });
 
 }
 
 
 /* =========================================================
    REGISTER PAGE
+   CONNECTED TO:
+   POST /api/auth/register
 ========================================================= */
 
 function initializeRegisterPage() {
 
-    const registerForm =
-        document.querySelector("#registerForm");
-
+    const registerForm = document.getElementById("registerForm");
 
     if (!registerForm) {
         return;
     }
 
-
-    registerForm.addEventListener("submit", function (event) {
+    registerForm.addEventListener("submit", async function (event) {
 
         event.preventDefault();
 
-
-        const nameInput =
-            registerForm.querySelector(
-                '[name="name"]'
-            );
-
-
-        const emailInput =
-            registerForm.querySelector(
-                '[name="email"]'
-            );
-
-
-        const passwordInput =
-            registerForm.querySelector(
-                '[name="password"]'
-            );
-
-
+        const nameInput = document.getElementById("name");
+        const emailInput = document.getElementById("email");
+        const passwordInput = document.getElementById("password");
         const confirmPasswordInput =
-            registerForm.querySelector(
-                '[name="confirmPassword"]'
-            );
+            document.getElementById("confirm-password");
 
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim().toLowerCase();
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
 
-        if (
-            !nameInput ||
-            !emailInput ||
-            !passwordInput ||
-            !confirmPasswordInput
-        ) {
+        /* Validate */
 
-            alert(
-                "Please make sure your register form uses these names: name, email, password, confirmPassword."
-            );
-
-            return;
-        }
-
-
-        const name =
-            nameInput.value.trim();
-
-
-        const email =
-            emailInput.value.trim().toLowerCase();
-
-
-        const password =
-            passwordInput.value;
-
-
-        const confirmPassword =
-            confirmPasswordInput.value;
-
-
-        /* Validation */
-
-        if (
-            name === "" ||
-            email === "" ||
-            password === "" ||
-            confirmPassword === ""
-        ) {
-
+        if (!name || !email || !password || !confirmPassword) {
             alert("Please fill in all fields.");
-
             return;
-
         }
-
-
-        if (!email.includes("@")) {
-
-            alert("Please enter a valid email address.");
-
-            return;
-
-        }
-
 
         if (password.length < 6) {
-
-            alert(
-                "Password must contain at least 6 characters."
-            );
-
+            alert("Password must contain at least 6 characters.");
             return;
-
         }
-
 
         if (password !== confirmPassword) {
-
             alert("Passwords do not match.");
-
             return;
-
         }
 
+        try {
 
-        /* Get existing users */
+            const response = await fetch(
+                "http://localhost:5000/api/auth/register",
+                {
+                    method: "POST",
 
-        const users =
-            getData(STORAGE_KEYS.users, []);
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
 
-
-        /* Check duplicate email */
-
-        const existingUser =
-            users.find(function (user) {
-
-                return user.email === email;
-
-            });
-
-
-        if (existingUser) {
-
-            alert(
-                "An account with this email already exists."
+                    body: JSON.stringify({
+                        name: name,
+                        email: email,
+                        password: password
+                    })
+                }
             );
 
-            return;
+            const data = await response.json();
 
+            console.log("Register response:", data);
+
+            if (!response.ok) {
+
+                alert(
+                    data.message ||
+                    "Registration failed."
+                );
+
+                return;
+            }
+
+            /* Registration successful */
+
+            saveCurrentUser(
+                data.user
+            );
+
+            alert("Account created successfully!");
+
+            /* Redirect to dashboard */
+
+            window.location.href = "dashboard.html";
+
+        } catch (error) {
+
+            console.error(
+                "Registration error:",
+                error
+            );
+
+            alert(
+                "Unable to connect to the server. Make sure your Node.js server is running."
+            );
         }
 
-
-        /* Create user */
-
-        const newUser = {
-
-            id: generateId(),
-
-            name: name,
-
-            email: email,
-
-            password: password,
-
-            createdAt: new Date().toISOString()
-
-        };
-
-
-        users.push(newUser);
-
-
-        saveData(
-            STORAGE_KEYS.users,
-            users
-        );
-
-
-        alert(
-            "Account created successfully!"
-        );
-
-
-        window.location.href = "login.html";
-
     });
-
 }
 
 
 /* =========================================================
    LOGIN PAGE
+   CONNECTED TO:
+   POST /api/auth/login
 ========================================================= */
 
 function initializeLoginPage() {
 
     const loginForm =
-        document.querySelector("#loginForm");
+        document.querySelector(
+            "#loginForm"
+        );
 
 
     if (!loginForm) {
+
         return;
+
     }
 
 
-    loginForm.addEventListener("submit", function (event) {
+    loginForm.addEventListener(
+        "submit",
+        async function (event) {
 
-        event.preventDefault();
-
-
-        const emailInput =
-            loginForm.querySelector(
-                '[name="email"]'
-            );
+            event.preventDefault();
 
 
-        const passwordInput =
-            loginForm.querySelector(
-                '[name="password"]'
-            );
+            /* Get fields */
 
-
-        if (!emailInput || !passwordInput) {
-
-            alert(
-                "Please make sure your login form uses name=\"email\" and name=\"password\"."
-            );
-
-            return;
-
-        }
-
-
-        const email =
-            emailInput.value.trim().toLowerCase();
-
-
-        const password =
-            passwordInput.value;
-
-
-        if (
-            email === "" ||
-            password === ""
-        ) {
-
-            alert("Please enter your email and password.");
-
-            return;
-
-        }
-
-
-        const users =
-            getData(STORAGE_KEYS.users, []);
-
-
-        const user =
-            users.find(function (user) {
-
-                return (
-                    user.email === email &&
-                    user.password === password
+            const emailInput =
+                loginForm.querySelector(
+                    '[name="email"]'
                 );
 
-            });
+
+            const passwordInput =
+                loginForm.querySelector(
+                    '[name="password"]'
+                );
 
 
-        if (!user) {
+            if (
+                !emailInput ||
+                !passwordInput
+            ) {
 
-            alert(
-                "Invalid email or password."
-            );
+                alert(
+                    "Login form fields are missing."
+                );
 
-            return;
+                return;
+
+            }
+
+
+            /* Get values */
+
+            const email =
+                emailInput.value
+                    .trim()
+                    .toLowerCase();
+
+
+            const password =
+                passwordInput.value;
+
+
+            /* Validation */
+
+            if (
+                !email ||
+                !password
+            ) {
+
+                alert(
+                    "Please enter your email and password."
+                );
+
+                return;
+
+            }
+
+
+            /* Send request */
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/api/auth/login`,
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+                                email: email,
+                                password: password
+                            })
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                /* Login failed */
+
+                if (!response.ok) {
+
+                    alert(
+                        data.message ||
+                        "Login failed."
+                    );
+
+                    return;
+
+                }
+
+
+                /* Save logged-in user */
+
+                saveCurrentUser(
+                    data.user
+                );
+
+
+                alert(
+                    "Welcome back, " +
+                    data.user.name +
+                    "!"
+                );
+
+
+                window.location.href =
+                    "dashboard.html";
+
+
+            } catch (error) {
+
+                console.error(
+                    "Login error:",
+                    error
+                );
+
+
+                alert(
+                    "Unable to connect to the server. Please make sure your backend is running on port 5000."
+                );
+
+            }
 
         }
-
-
-        /* Save logged-in user */
-
-        localStorage.setItem(
-            STORAGE_KEYS.currentUser,
-            user.email
-        );
-
-
-        alert(
-            "Welcome back, " + user.name + "!"
-        );
-
-
-        window.location.href =
-            "dashboard.html";
-
-    });
+    );
 
 }
 
 
 /* =========================================================
-   CREATE BLOG PAGE
+   CREATE BLOG
+   CONNECTED TO:
+   POST /api/blogs
 ========================================================= */
 
 function initializeCreateBlogPage() {
 
+    /*
+       Your current HTML may use either
+       #createBlogForm or #blogForm.
+    */
+
     const createForm =
-        document.querySelector("#createBlogForm");
+        document.querySelector(
+            "#createBlogForm"
+        ) ||
+        document.querySelector(
+            "#blogForm"
+        );
 
 
     if (!createForm) {
+
         return;
+
     }
 
 
@@ -742,157 +736,211 @@ function initializeCreateBlogPage() {
     }
 
 
-    createForm.addEventListener("submit", function (event) {
+    createForm.addEventListener(
+        "submit",
+        async function (event) {
 
-        event.preventDefault();
-
-
-        const titleInput =
-            createForm.querySelector(
-                '[name="title"]'
-            );
+            event.preventDefault();
 
 
-        const categoryInput =
-            createForm.querySelector(
-                '[name="category"]'
-            );
+            /* Find fields */
+
+            const titleInput =
+                createForm.querySelector(
+                    '[name="title"]'
+                ) ||
+                document.getElementById(
+                    "blogTitle"
+                );
 
 
-        const contentInput =
-            createForm.querySelector(
-                '[name="content"]'
-            );
+            const categoryInput =
+                createForm.querySelector(
+                    '[name="category"]'
+                ) ||
+                document.getElementById(
+                    "blogCategory"
+                );
 
 
-        if (
-            !titleInput ||
-            !categoryInput ||
-            !contentInput
-        ) {
+            const contentInput =
+                createForm.querySelector(
+                    '[name="content"]'
+                ) ||
+                document.getElementById(
+                    "blogContent"
+                );
 
-            alert(
-                "Your form needs title, category and content fields."
-            );
 
-            return;
+            if (
+                !titleInput ||
+                !categoryInput ||
+                !contentInput
+            ) {
+
+                alert(
+                    "Please make sure your blog form has title, category and content fields."
+                );
+
+                return;
+
+            }
+
+
+            /* Values */
+
+            const title =
+                titleInput.value.trim();
+
+
+            const category =
+                categoryInput.value.trim();
+
+
+            const content =
+                contentInput.value.trim();
+
+
+            /* Validation */
+
+            if (
+                !title ||
+                !content
+            ) {
+
+                alert(
+                    "Please enter a title and blog content."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                title.length < 5
+            ) {
+
+                alert(
+                    "Blog title should contain at least 5 characters."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                content.length < 20
+            ) {
+
+                alert(
+                    "Blog content should contain at least 20 characters."
+                );
+
+                return;
+
+            }
+
+
+            /* Current user */
+
+            const currentUser =
+                getCurrentUser();
+
+
+            const author =
+                currentUser
+                    ? currentUser.name
+                    : "Anonymous";
+
+
+            /* Send blog to backend */
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/api/blogs`,
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+
+                                title: title,
+
+                                category:
+                                    category ||
+                                    "General",
+
+                                content: content,
+
+                                author: author
+
+                            })
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                /* API error */
+
+                if (!response.ok) {
+
+                    alert(
+                        data.message ||
+                        "Unable to create blog."
+                    );
+
+                    return;
+
+                }
+
+
+                /* Success */
+
+                alert(
+                    "Your blog post has been published!"
+                );
+
+
+                createForm.reset();
+
+
+                window.location.href =
+                    "dashboard.html";
+
+
+            } catch (error) {
+
+                console.error(
+                    "Create blog error:",
+                    error
+                );
+
+
+                alert(
+                    "Unable to connect to the server. Please make sure your backend is running on port 5000."
+                );
+
+            }
 
         }
-
-
-        const title =
-            titleInput.value.trim();
-
-
-        const category =
-            categoryInput.value.trim();
-
-
-        const content =
-            contentInput.value.trim();
-
-
-        /* Validation */
-
-        if (
-            title === "" ||
-            category === "" ||
-            content === ""
-        ) {
-
-            alert(
-                "Please complete all blog fields."
-            );
-
-            return;
-
-        }
-
-
-        if (title.length < 5) {
-
-            alert(
-                "Blog title should contain at least 5 characters."
-            );
-
-            return;
-
-        }
-
-
-        if (content.length < 20) {
-
-            alert(
-                "Your blog content should contain at least 20 characters."
-            );
-
-            return;
-
-        }
-
-
-        /* Get existing posts */
-
-        const posts =
-            getData(STORAGE_KEYS.posts, []);
-
-
-        /* Create excerpt */
-
-        const excerpt =
-            content.length > 120
-                ? content.substring(0, 120) + "..."
-                : content;
-
-
-        /* Create post */
-
-        const newPost = {
-
-            id: generateId(),
-
-            title: title,
-
-            category: category,
-
-            content: content,
-
-            excerpt: excerpt,
-
-            author: getCurrentUser(),
-
-            createdAt: new Date().toISOString()
-
-        };
-
-
-        posts.push(newPost);
-
-
-        saveData(
-            STORAGE_KEYS.posts,
-            posts
-        );
-
-
-        alert(
-            "Your blog post has been published!"
-        );
-
-
-        createForm.reset();
-
-
-        window.location.href =
-            "dashboard.html";
-
-    });
+    );
 
 }
 
 
 /* =========================================================
-   DASHBOARD PAGE
+   DASHBOARD
 ========================================================= */
 
 function initializeDashboardPage() {
@@ -923,29 +971,19 @@ function initializeDashboardPage() {
 
 
 /* =========================================================
-   DASHBOARD - USER
+   DASHBOARD USER
 ========================================================= */
 
 function displayDashboardUser() {
 
-    const userEmail =
+    const currentUser =
         getCurrentUser();
 
 
-    const users =
-        getData(STORAGE_KEYS.users, []);
+    if (!currentUser) {
 
-
-    const user =
-        users.find(function (user) {
-
-            return user.email === userEmail;
-
-        });
-
-
-    if (!user) {
         return;
+
     }
 
 
@@ -955,12 +993,14 @@ function displayDashboardUser() {
         );
 
 
-    userNameElements.forEach(function (element) {
+    userNameElements.forEach(
+        function (element) {
 
-        element.textContent =
-            user.name;
+            element.textContent =
+                currentUser.name;
 
-    });
+        }
+    );
 
 
     const userEmailElements =
@@ -969,50 +1009,48 @@ function displayDashboardUser() {
         );
 
 
-    userEmailElements.forEach(function (element) {
+    userEmailElements.forEach(
+        function (element) {
 
-        element.textContent =
-            user.email;
+            element.textContent =
+                currentUser.email;
 
-    });
+        }
+    );
 
 }
 
 
 /* =========================================================
-   DASHBOARD - STATS
+   DASHBOARD STATS
 ========================================================= */
 
-function displayDashboardStats() {
+async function displayDashboardStats() {
 
-    const posts =
-        getData(STORAGE_KEYS.posts, []);
+    /*
+       Stats will be connected to the backend
+       once GET /api/blogs is added.
 
-
-    const currentUser =
-        getCurrentUser();
-
-
-    const userPosts =
-        posts.filter(function (post) {
-
-            return post.author === currentUser;
-
-        });
-
+       For now we display 0 because your
+       backend currently only has POST /api/blogs.
+    */
 
     const totalPosts =
-        document.querySelector("#totalPosts");
+        document.querySelector(
+            "#totalPosts"
+        );
 
 
     const publishedPosts =
-        document.querySelector("#publishedPosts");
+        document.querySelector(
+            "#publishedPosts"
+        );
 
 
     if (totalPosts) {
 
         totalPosts.textContent =
-            userPosts.length;
+            "0";
 
     }
 
@@ -1020,7 +1058,7 @@ function displayDashboardStats() {
     if (publishedPosts) {
 
         publishedPosts.textContent =
-            userPosts.length;
+            "0";
 
     }
 
@@ -1028,10 +1066,18 @@ function displayDashboardStats() {
 
 
 /* =========================================================
-   DASHBOARD - POSTS
+   DASHBOARD POSTS
 ========================================================= */
 
 function displayDashboardPosts() {
+
+    /*
+       Your current backend does not yet
+       have GET /api/blogs.
+
+       Therefore posts cannot be fetched
+       from blogs.json by the browser yet.
+    */
 
     const container =
         document.querySelector(
@@ -1040,348 +1086,53 @@ function displayDashboardPosts() {
 
 
     if (!container) {
-        return;
-    }
-
-
-    const posts =
-        getData(STORAGE_KEYS.posts, []);
-
-
-    const currentUser =
-        getCurrentUser();
-
-
-    const userPosts =
-        posts
-            .filter(function (post) {
-
-                return post.author === currentUser;
-
-            })
-            .sort(function (a, b) {
-
-                return new Date(b.createdAt) -
-                       new Date(a.createdAt);
-
-            });
-
-
-    if (userPosts.length === 0) {
-
-        container.innerHTML = `
-            <div class="empty-state">
-                <h3>No posts yet</h3>
-
-                <p>
-                    Start writing your first blog post.
-                </p>
-
-                <a
-                    href="create-blog.html"
-                    class="button button-primary"
-                >
-                    Create a post
-                </a>
-            </div>
-        `;
 
         return;
 
     }
 
 
-    container.innerHTML = "";
-
-
-    userPosts.forEach(function (post) {
-
-        const article =
-            document.createElement("article");
-
-        article.className = "dashboard-post";
-
-
-        article.innerHTML = `
-            <div class="dashboard-post-info">
-
-                <span class="post-category">
-                    ${escapeHTML(post.category)}
-                </span>
-
-                <h3>
-                    ${escapeHTML(post.title)}
-                </h3>
-
-                <p>
-                    ${escapeHTML(post.excerpt)}
-                </p>
-
-                <small>
-                    ${formatDate(post.createdAt)}
-                </small>
-
-            </div>
-
-            <div class="dashboard-post-actions">
-
-                <button
-                    class="view-post"
-                    data-id="${post.id}"
-                >
-                    View
-                </button>
-
-                <button
-                    class="delete-post"
-                    data-id="${post.id}"
-                >
-                    Delete
-                </button>
-
-            </div>
-        `;
-
-
-        container.appendChild(article);
-
-    });
-
-
-    /* Delete buttons */
-
-    const deleteButtons =
-        container.querySelectorAll(
-            ".delete-post"
-        );
-
-
-    deleteButtons.forEach(function (button) {
-
-        button.addEventListener(
-            "click",
-            function () {
-
-                const postId =
-                    button.dataset.id;
-
-
-                deletePost(postId);
-
-            }
-        );
-
-    });
-
-
-    /* View buttons */
-
-    const viewButtons =
-        container.querySelectorAll(
-            ".view-post"
-        );
-
-
-    viewButtons.forEach(function (button) {
-
-        button.addEventListener(
-            "click",
-            function () {
-
-                const postId =
-                    button.dataset.id;
-
-
-                viewFullPost(postId);
-
-            }
-        );
-
-    });
-
-}
-
-
-/* =========================================================
-   DASHBOARD - DELETE POST
-========================================================= */
-
-function deletePost(postId) {
-
-    const confirmed =
-        confirm(
-            "Are you sure you want to delete this post?"
-        );
-
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    const posts =
-        getData(STORAGE_KEYS.posts, []);
-
-
-    const updatedPosts =
-        posts.filter(function (post) {
-
-            return post.id !== postId;
-
-        });
-
-
-    saveData(
-        STORAGE_KEYS.posts,
-        updatedPosts
-    );
-
-
-    alert(
-        "Post deleted successfully."
-    );
-
-
-    /* Refresh dashboard */
-
-    displayDashboardStats();
-
-    displayDashboardPosts();
-
-}
-
-
-/* =========================================================
-   DASHBOARD - VIEW FULL POST
-========================================================= */
-
-function viewFullPost(postId) {
-
-    const posts =
-        getData(STORAGE_KEYS.posts, []);
-
-
-    const post =
-        posts.find(function (p) {
-
-            return p.id === postId;
-
-        });
-
-
-    if (!post) {
-
-        alert("Post not found.");
-
-        return;
-
-    }
-
-
-    /* Create modal */
-
-    const modal =
-        document.createElement("div");
-
-    modal.className =
-        "post-modal";
-
-    modal.id =
-        "postModal";
-
-
-    modal.innerHTML = `
-        <div class="modal-overlay" onclick="closePostModal()"></div>
-
-        <div class="modal-content">
-
-            <button class="modal-close" onclick="closePostModal()">
-                ✕
-            </button>
-
-            <div class="modal-post">
-
-                <div class="post-header">
-
-                    <span class="post-category">
-                        ${escapeHTML(post.category)}
-                    </span>
-
-                    <h2>
-                        ${escapeHTML(post.title)}
-                    </h2>
-
-                    <small>
-                        ${formatDate(post.createdAt)}
-                    </small>
-
-                </div>
-
-                <div class="post-body">
-
-                    ${escapeHTML(post.content)}
-
-                </div>
-
-            </div>
+    container.innerHTML = `
+        <div class="empty-state">
+
+            <h3>Your posts will appear here</h3>
+
+            <p>
+                Create a blog post to get started.
+            </p>
+
+            <a
+                href="create-blog.html"
+                class="button button-primary"
+            >
+                Create a post
+            </a>
 
         </div>
     `;
 
+}
 
-    document.body.appendChild(modal);
 
+/* =========================================================
+   OPTIONAL LOGOUT BUTTON
+========================================================= */
 
-    /* Close modal on Escape key */
+document.addEventListener(
+    "click",
+    function (event) {
 
-    document.addEventListener("keydown", function (event) {
+        if (
+            event.target.matches(
+                "[data-action='logout']"
+            )
+        ) {
 
-        if (event.key === "Escape") {
+            event.preventDefault();
 
-            closePostModal();
+            logoutUser();
 
         }
 
-    });
-
-}
-
-
-/* =========================================================
-   DASHBOARD - CLOSE POST MODAL
-========================================================= */
-
-function closePostModal() {
-
-    const modal =
-        document.getElementById("postModal");
-
-
-    if (modal) {
-
-        modal.remove();
-
     }
-
-}
-
-
-/* =========================================================
-   OPTIONAL - LOGOUT BUTTON
-========================================================= */
-
-document.addEventListener("click", function (event) {
-
-    if (
-        event.target.matches(
-            "[data-action='logout']"
-        )
-    ) {
-
-        event.preventDefault();
-
-        logoutUser();
-
-    }
-
-});
+);
