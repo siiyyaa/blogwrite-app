@@ -26,7 +26,8 @@ const API_URL = "http://localhost:5000";
 ========================================================= */
 
 const STORAGE_KEYS = {
-    currentUser: "blogwrite_current_user"
+    currentUser: "blogwrite_current_user",
+    token: "blogwrite_token"
 };
 
 
@@ -79,12 +80,22 @@ function saveCurrentUser(user) {
 
 }
 
+function saveToken(token) {
+    localStorage.setItem(STORAGE_KEYS.token, token);
+}
+
+function getAuthHeaders() {
+    const token = localStorage.getItem(STORAGE_KEYS.token);
+    return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 
 function clearCurrentUser() {
 
     localStorage.removeItem(
         STORAGE_KEYS.currentUser
     );
+    localStorage.removeItem(STORAGE_KEYS.token);
 
 }
 
@@ -175,6 +186,12 @@ document.addEventListener(
         if (currentPage === "dashboard.html") {
 
             initializeDashboardPage();
+
+        }
+
+        if (currentPage === "blog-detail.html") {
+
+            initializeBlogDetailPage();
 
         }
 
@@ -411,13 +428,56 @@ function updateCurrentYear() {
 
 function initializeHomePage() {
 
-    /*
-       Your homepage currently contains
-       static posts.
+    const postList = document.querySelector(".latest-posts .post-list");
+    if (!postList) return;
 
-       We leave them in place.
-    */
+    fetch(`${API_URL}/api/blogs`)
+        .then(response => response.json())
+        .then(data => {
+            const posts = (data.blogs || []).slice(0, 3);
+            postList.innerHTML = posts.length
+                ? posts.map(post => `
+                    <article class="post">
+                        <div class="post-meta"><span>${escapeHTML(post.category)}</span></div>
+                        <h3>${escapeHTML(post.title)}</h3>
+                        <p>${escapeHTML(post.content.slice(0, 150))}</p>
+                        <a href="blog-detail.html?id=${encodeURIComponent(post.id)}" class="post-link">Read post →</a>
+                    </article>
+                `).join("")
+                : `<p>No posts have been published yet.</p>`;
+        })
+        .catch(error => console.error("Home posts error:", error));
 
+}
+
+function initializeBlogDetailPage() {
+    const container = document.getElementById("blogDetail");
+    const blogId = new URLSearchParams(window.location.search).get("id");
+
+    if (!container || !blogId) {
+        if (container) container.innerHTML = "<h1>Blog not found</h1><p>Choose a blog from the home page.</p>";
+        return;
+    }
+
+    fetch(`${API_URL}/api/blogs/${encodeURIComponent(blogId)}`)
+        .then(async response => {
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || "Blog not found");
+            return data.blog;
+        })
+        .then(blog => {
+            container.innerHTML = `
+                <p class="eyebrow">${escapeHTML(blog.category)}</p>
+                <h1>${escapeHTML(blog.title)}</h1>
+                <p class="blog-detail-meta">By ${escapeHTML(blog.author)} · ${formatDate(blog.createdAt)}</p>
+                <div class="blog-detail-content">${escapeHTML(blog.content).replace(/\n/g, "<br>")}</div>
+                <a href="home.html#latest-posts" class="button button-secondary">Back to posts</a>
+            `;
+            document.title = `BlogWrite | ${blog.title}`;
+        })
+        .catch(error => {
+            container.innerHTML = `<h1>Blog not found</h1><p>${escapeHTML(error.message)}</p>`;
+        });
 }
 
 
@@ -470,7 +530,7 @@ function initializeRegisterPage() {
         try {
 
             const response = await fetch(
-                "http://localhost:5000/api/auth/register",
+                `${API_URL}/api/auth/register`,
                 {
                     method: "POST",
 
@@ -505,6 +565,7 @@ function initializeRegisterPage() {
             saveCurrentUser(
                 data.user
             );
+            saveToken(data.token);
 
             alert("Account created successfully!");
 
@@ -658,6 +719,7 @@ function initializeLoginPage() {
                 saveCurrentUser(
                     data.user
                 );
+                saveToken(data.token);
 
 
                 alert(
@@ -867,7 +929,8 @@ function initializeCreateBlogPage() {
 
                             headers: {
                                 "Content-Type":
-                                    "application/json"
+                                    "application/json",
+                                ...getAuthHeaders()
                             },
 
                             body: JSON.stringify({
@@ -1026,42 +1089,19 @@ function displayDashboardUser() {
 ========================================================= */
 
 async function displayDashboardStats() {
+    const totalPosts = document.querySelector("#totalPosts");
+    const publishedPosts = document.querySelector("#publishedPosts");
 
-    /*
-       Stats will be connected to the backend
-       once GET /api/blogs is added.
+    try {
+        const response = await fetch(`${API_URL}/api/blogs`);
+        const data = await response.json();
+        const posts = data.blogs || [];
 
-       For now we display 0 because your
-       backend currently only has POST /api/blogs.
-    */
-
-    const totalPosts =
-        document.querySelector(
-            "#totalPosts"
-        );
-
-
-    const publishedPosts =
-        document.querySelector(
-            "#publishedPosts"
-        );
-
-
-    if (totalPosts) {
-
-        totalPosts.textContent =
-            "0";
-
+        if (totalPosts) totalPosts.textContent = posts.length;
+        if (publishedPosts) publishedPosts.textContent = posts.length;
+    } catch (error) {
+        console.error("Dashboard stats error:", error);
     }
-
-
-    if (publishedPosts) {
-
-        publishedPosts.textContent =
-            "0";
-
-    }
-
 }
 
 
@@ -1069,16 +1109,7 @@ async function displayDashboardStats() {
    DASHBOARD POSTS
 ========================================================= */
 
-function displayDashboardPosts() {
-
-    /*
-       Your current backend does not yet
-       have GET /api/blogs.
-
-       Therefore posts cannot be fetched
-       from blogs.json by the browser yet.
-    */
-
+async function displayDashboardPosts() {
     const container =
         document.querySelector(
             "#dashboardPosts"
@@ -1092,24 +1123,31 @@ function displayDashboardPosts() {
     }
 
 
-    container.innerHTML = `
-        <div class="empty-state">
+    try {
+        const response = await fetch(`${API_URL}/api/blogs`);
+        const data = await response.json();
+        const posts = data.blogs || [];
 
-            <h3>Your posts will appear here</h3>
+        if (!posts.length) {
+            container.innerHTML = `<div class="empty-state"><h3>Your posts will appear here</h3><p>Create a blog post to get started.</p><a href="create-blog.html" class="button button-primary">Create a post</a></div>`;
+            return;
+        }
 
-            <p>
-                Create a blog post to get started.
-            </p>
-
-            <a
-                href="create-blog.html"
-                class="button button-primary"
-            >
-                Create a post
-            </a>
-
-        </div>
-    `;
+        container.innerHTML = posts.map(post => `
+            <article class="dashboard-post">
+                <div class="dashboard-post-info">
+                    <span class="post-status published">PUBLISHED</span>
+                    <h3>${escapeHTML(post.title)}</h3>
+                    <p>${escapeHTML(post.content.slice(0, 160))}</p>
+                    <small>${escapeHTML(post.category)} · ${formatDate(post.createdAt)}</small>
+                </div>
+                <a href="blog-detail.html?id=${encodeURIComponent(post.id)}" class="post-link">Read →</a>
+            </article>
+        `).join("");
+    } catch (error) {
+        console.error("Dashboard posts error:", error);
+        container.innerHTML = `<div class="empty-state"><p>Unable to load your posts.</p></div>`;
+    }
 
 }
 

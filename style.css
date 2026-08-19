@@ -1897,3 +1897,26 @@ select {
         padding: 1.5rem;
     }
 }
+
+.blog-detail {
+    width: min(760px, calc(100% - 3rem));
+    margin: 5rem auto;
+}
+
+.blog-detail h1 {
+    max-width: 14ch;
+    margin-bottom: 1rem;
+}
+
+.blog-detail-meta {
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem;
+}
+
+.blog-detail-content {
+    white-space: normal;
+    font-size: 1.1rem;
+    line-height: 1.9;
+    margin: 2rem 0;
+}
