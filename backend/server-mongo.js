@@ -168,7 +168,37 @@ app.post("/api/auth/login", async (req, res, next) => {
 
 app.get("/api/blogs", async (req, res, next) => {
     try {
-        const blogs = await Blog.find().populate("author", "name").sort({ createdAt: -1 });
+        const query = {};
+        const search = req.query.search?.trim();
+        const category = req.query.category?.trim();
+
+        if (search) {
+            const searchPattern = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            query.$or = [
+                { title: { $regex: searchPattern, $options: "i" } },
+                { content: { $regex: searchPattern, $options: "i" } }
+            ];
+        }
+
+        if (category) {
+            query.category = { $regex: `^${category.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" };
+        }
+
+        if (req.query.mine === "true") {
+            const token = req.headers.authorization?.replace("Bearer ", "");
+            if (!token) {
+                return res.status(401).json({ message: "Authentication is required" });
+            }
+
+            try {
+                const user = jwt.verify(token, JWT_SECRET);
+                query.author = user.id;
+            } catch (error) {
+                return res.status(401).json({ message: "Invalid or expired token" });
+            }
+        }
+
+        const blogs = await Blog.find(query).populate("author", "name").sort({ createdAt: -1 });
         res.json({ blogs: blogs.map(serializeBlog) });
     } catch (error) {
         next(error);
@@ -205,6 +235,57 @@ app.post("/api/blogs", requireAuth, async (req, res, next) => {
         const blog = await Blog.create({ title, category, content, author: req.user.id });
         await blog.populate("author", "name");
         res.status(201).json({ message: "Blog created successfully", blog: serializeBlog(blog) });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.put("/api/blogs/:id", requireAuth, async (req, res, next) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(400).json({ message: "Invalid blog id" });
+        }
+
+        const title = req.body.title?.trim();
+        const category = req.body.category?.trim() || "General";
+        const content = req.body.content?.trim();
+
+        if (!title || !content) {
+            return res.status(400).json({ message: "Title and content are required" });
+        }
+
+        const blog = await Blog.findOneAndUpdate(
+            { _id: req.params.id, author: req.user.id },
+            { title, category, content },
+            { new: true, runValidators: true }
+        ).populate("author", "name");
+
+        if (!blog) {
+            return res.status(404).json({ message: "Blog not found or you do not own it" });
+        }
+
+        res.json({ message: "Blog updated successfully", blog: serializeBlog(blog) });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.delete("/api/blogs/:id", requireAuth, async (req, res, next) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(400).json({ message: "Invalid blog id" });
+        }
+
+        const blog = await Blog.findOneAndDelete({
+            _id: req.params.id,
+            author: req.user.id
+        });
+
+        if (!blog) {
+            return res.status(404).json({ message: "Blog not found or you do not own it" });
+        }
+
+        res.json({ message: "Blog deleted successfully" });
     } catch (error) {
         next(error);
     }
